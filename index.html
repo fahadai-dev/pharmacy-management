@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI ফার্মেসি ম্যানেজার</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0a0f1e;color:#e2e8f0;min-height:100vh;display:flex;flex-direction:column}
+/* SIDEBAR */
+.layout{display:flex;flex:1;min-height:100vh}
+.sidebar{width:220px;background:#0f172a;border-right:1px solid #1e293b;display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-brand{padding:18px 16px;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:10px}
+.brand-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#0891b2,#6366f1);display:flex;align-items:center;justify-content:center;font-size:18px}
+.brand-text{font-size:14px;font-weight:700;color:#f1f5f9}
+.brand-sub{font-size:10px;color:#64748b}
+.shop-label{padding:14px 16px 6px;font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:.08em}
+.shop-name{margin:0 10px 14px;background:#1e293b;border-radius:8px;padding:8px 12px;font-size:12px;color:#94a3b8;border:1px solid #334155}
+.nav{flex:1;padding:6px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;color:#94a3b8;cursor:pointer;border-left:3px solid transparent;transition:all .2s;position:relative}
+.nav-item:hover{background:#1e293b;color:#e2e8f0}
+.nav-item.on{background:#1e293b;color:#38bdf8;border-left:3px solid #38bdf8}
+.nav-item .icon{font-size:16px;width:20px;text-align:center}
+.badge-dot{position:absolute;right:14px;width:7px;height:7px;border-radius:50%;background:#f87171}
+.ai-box{margin:10px;background:#1e293b;border-radius:10px;padding:12px;border:1px solid #334155}
+.ai-box-title{font-size:10px;color:#64748b;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.ai-tip{font-size:11px;color:#94a3b8;line-height:1.6}
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:#0f172a;border-bottom:1px solid #1e293b;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.topbar-left{font-size:13px;color:#64748b}
+.topbar-left span{color:#38bdf8;font-weight:600}
+.topbar-right{display:flex;gap:8px}
+.btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.btn-voice{background:#1e293b;color:#a78bfa;border:1px solid #6366f1}
+.btn-voice:hover{background:#312e81}
+.btn-sell{background:linear-gradient(135deg,#10b981,#0891b2);color:#fff}
+.btn-sell:hover{opacity:.9}
+.btn-add{background:#1e293b;color:#38bdf8;border:1px solid #0891b2}
+.btn-add:hover{background:#0c4a6e}
+.content{flex:1;overflow-y:auto;padding:20px}
+/* TABS */
+.tabs{display:flex;gap:2px;margin-bottom:18px;background:#0f172a;border-radius:10px;padding:4px;border:1px solid #1e293b}
+.tab{flex:1;padding:8px;font-size:12px;font-weight:500;color:#64748b;cursor:pointer;border:none;background:none;border-radius:8px;transition:all .2s;text-align:center}
+.tab.on{background:#1e293b;color:#38bdf8}
+.pane{display:none}
+.pane.on{display:block}
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.met{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px;position:relative;overflow:hidden}
+.met::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.met.blue::before{background:linear-gradient(90deg,#0891b2,#6366f1)}
+.met.green::before{background:linear-gradient(90deg,#10b981,#0891b2)}
+.met.red::before{background:linear-gradient(90deg,#f87171,#fb923c)}
+.met.amber::before{background:linear-gradient(90deg,#fbbf24,#f87171)}
+.met-v{font-size:24px;font-weight:700;margin-bottom:3px}
+.met.blue .met-v{color:#38bdf8}
+.met.green .met-v{color:#4ade80}
+.met.red .met-v{color:#f87171}
+.met.amber .met-v{color:#fbbf24}
+.met-l{font-size:11px;color:#64748b}
+.met-sub{font-size:10px;color:#475569;margin-top:2px}
+/* REALTIME TABLE */
+.section-title{font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.table-wrap{background:#0f172a;border:1px solid #1e293b;border-radius:12px;overflow:hidden;margin-bottom:18px}
+.rtable{width:100%;border-collapse:collapse}
+.rtable th{background:#111827;font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;padding:10px 14px;text-align:left}
+.rtable td{padding:10px 14px;border-top:1px solid #1e293b;font-size:13px;vertical-align:middle}
+.rtable tr:hover td{background:#1e293b30}
+/* STOCK ALERT */
+.alert-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid #1e293b}
+.alert-row:last-child{border-bottom:none}
+.a-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.a-icon.red{background:#450a0a}
+.a-icon.amber{background:#431407}
+.a-title{font-size:13px;font-weight:600;color:#e2e8f0}
+.a-sub{font-size:11px;color:#64748b;margin-top:1px}
+.order-btn{margin-left:auto;background:#1e293b;border:1px solid #334155;color:#38bdf8;font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.order-btn:hover{background:#0c4a6e}
+/* AI CHAT */
+.chat-wrap{background:#0f172a;border:1px solid #1e293b;border-radius:12px;overflow:hidden}
+.chat-header{background:#111827;padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #1e293b}
+.chat-ai-dot{width:8px;height:8px;border-radius:50%;background:#4ade80}
+.chat-messages{height:320px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{display:flex;gap:8px;align-items:flex-end}
+.msg.user{flex-direction:row-reverse}
+.avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.avatar.ai{background:linear-gradient(135deg,#0891b2,#6366f1);color:#fff}
+.avatar.user{background:#334155;color:#94a3b8}
+.bubble{max-width:78%;padding:9px 13px;border-radius:12px;font-size:13px;line-height:1.6}
+.ai .bubble{background:#1e293b;color:#e2e8f0;border-radius:12px 12px 12px 2px}
+.user .bubble{background:linear-gradient(135deg,#0891b2,#6366f1);color:#fff;border-radius:12px 12px 2px 12px}
+.quick-q{padding:10px 14px;border-top:1px solid #1e293b;display:flex;gap:6px;flex-wrap:wrap}
+.qq{font-size:11px;padding:5px 11px;border:1px solid #334155;border-radius:16px;cursor:pointer;color:#94a3b8;background:#0f172a;transition:all .2s}
+.qq:hover{background:#1e293b;color:#38bdf8;border-color:#0891b2}
+.chat-input-row{padding:10px 14px;border-top:1px solid #1e293b;display:flex;gap:8px}
+.chat-input-row input{flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;padding:8px 12px;outline:none}
+.chat-input-row input:focus{border-color:#0891b2}
+.send-btn{background:linear-gradient(135deg,#0891b2,#6366f1);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px}
+/* HISTORY */
+.date-filter{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.date-filter input{background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;padding:7px 12px;outline:none}
+.date-filter input:focus{border-color:#0891b2}
+.date-filter select{background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;padding:7px 12px;outline:none;cursor:pointer}
+.hist-card{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:14px;margin-bottom:10px}
+.hist-date{font-size:12px;font-weight:600;color:#64748b;margin-bottom:8px}
+.hist-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid #1e293b10}
+.hist-row:last-child{border-bottom:none}
+.hist-total{display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#38bdf8;margin-top:8px;padding-top:8px;border-top:1px solid #1e293b}
+/* VOICE MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.on{display:flex}
+.modal{background:#0f172a;border:1px solid #334155;border-radius:16px;padding:28px;width:360px;text-align:center}
+.modal-title{font-size:16px;font-weight:700;color:#e2e8f0;margin-bottom:6px}
+.modal-sub{font-size:12px;color:#64748b;margin-bottom:20px}
+.mic-btn{width:80px;height:80px;border-radius:50%;background:#1e293b;border:3px solid #334155;font-size:32px;cursor:pointer;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.mic-btn.on{border-color:#f87171;background:#450a0a;animation:pulse .9s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.mic-status{font-size:13px;color:#94a3b8;margin-bottom:10px}
+.transcript-box{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 14px;font-size:13px;color:#e2e8f0;min-height:36px;margin-bottom:12px}
+.voice-result{padding:10px 14px;border-radius:8px;font-size:13px;display:none;margin-bottom:12px}
+.voice-ok{background:#052e16;color:#4ade80;border:1px solid #166534}
+.voice-err{background:#450a0a;color:#f87171;border:1px solid #991b1b}
+.modal-hint{font-size:11px;color:#475569;line-height:1.9;background:#111827;border-radius:8px;padding:10px;text-align:left}
+.modal-close{margin-top:14px;background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:7px 20px;border-radius:8px;cursor:pointer;font-size:13px}
+.modal-close:hover{color:#e2e8f0}
+/* TOAST */
+.toast{display:none;position:fixed;bottom:24px;right:24px;background:#052e16;border:1px solid #166534;color:#4ade80;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:500;z-index:200;box-shadow:0 4px 24px rgba(0,0,0,.5)}
+/* SELL MODAL */
+.smodal{background:#0f172a;border:1px solid #334155;border-radius:16px;padding:24px;width:480px;max-width:95vw;max-height:80vh;overflow-y:auto}
+.smodal-title{font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:14px}
+.s-search{width:100%;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;padding:8px 12px;outline:none;margin-bottom:10px}
+.s-search:focus{border-color:#0891b2}
+.drug-list-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;cursor:pointer;transition:all .2s}
+.drug-list-item:hover{background:#1e293b}
+.dli-name{font-size:13px;font-weight:500;color:#e2e8f0}
+.dli-meta{font-size:11px;color:#64748b;margin-top:1px}
+.dli-right{display:flex;align-items:center;gap:6px}
+.qctrl{display:flex;align-items:center;gap:5px}
+.qb{width:24px;height:24px;border-radius:50%;background:#334155;border:none;color:#e2e8f0;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.qb:hover{background:#475569}
+.qv{width:38px;background:#0a0f1e;border:1px solid #334155;border-radius:5px;color:#e2e8f0;font-size:12px;text-align:center;padding:3px}
+.usel{background:#0a0f1e;border:1px solid #334155;border-radius:5px;color:#e2e8f0;font-size:11px;padding:3px 5px;cursor:pointer}
+.cart-bottom{border-top:1px solid #1e293b;margin-top:12px;padding-top:12px}
+.cart-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;color:#94a3b8}
+.cart-total-row{display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#38bdf8;margin-top:8px}
+.confirm-sell-btn{width:100%;margin-top:12px;padding:11px;background:linear-gradient(135deg,#10b981,#0891b2);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+.confirm-sell-btn:hover{opacity:.9}
+</style>
+</head>
+<body>
+
+<div class="layout">
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">💊</div>
+    <div><div class="brand-text">AI ফার্মেসি</div><div class="brand-sub">Manager v1.0</div></div>
+  </div>
+  <div class="shop-label">দোকান</div>
+  <div class="shop-name">মেডিকেয়ার ফার্মেসি, ঢাকা</div>
+  <nav class="nav">
+    <div class="nav-item on" onclick="showTab('overview')"><span class="icon">📊</span> Overview</div>
+    <div class="nav-item" onclick="showTab('sell')"><span class="icon">💰</span> বিক্রির রেকর্ড</div>
+    <div class="nav-item" onclick="showTab('stock')"><span class="icon">📦</span> স্টক সতর্কতা<span class="badge-dot"></span></div>
+    <div class="nav-item" onclick="showTab('history')"><span class="icon">📅</span> বিক্রির ইতিহাস</div>
+    <div class="nav-item" onclick="showTab('ai')"><span class="icon">🤖</span> AI ম্যানেজার</div>
+  </nav>
+  <div class="ai-box">
+    <div class="ai-box-title">🤖 AI বলছে</div>
+    <div class="ai-tip" id="aiTip">আজকে Napa সবচেয়ে বেশি বিক্রি হচ্ছে। Amoxicillin স্টক কম — অর্ডার দিন।</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">শনিবার, ৬ জুন ২০২৬ &nbsp;|&nbsp; <span id="liveTime"></span></div>
+    <div class="topbar-right">
+      <button class="btn btn-voice" onclick="openVoice()">🎙️ Voice Entry</button>
+      <button class="btn btn-sell" onclick="openSellModal()">+ বিক্রি যোগ</button>
+      <button class="btn btn-add" onclick="showTab('stock')">📦 স্টক দেখুন</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="pane on" id="pane-overview">
+      <div class="section-title" style="font-size:20px;font-weight:700;margin-bottom:4px">আজকের Overview</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:16px">শনিবার, ৬ জুন ২০২৬</div>
+      <div class="metrics">
+        <div class="met blue"><div class="met-v" id="m1">৳৪২,৫০০</div><div class="met-l">আজকের বিক্রি</div><div class="met-sub">২৮টি লেনদেন</div></div>
+        <div class="met green"><div class="met-v" id="m2">৳১৮,৩০০</div><div class="met-l">আজকের লাভ</div><div class="met-sub">মার্জিন ৪৩%</div></div>
+        <div class="met amber"><div class="met-v">৬</div><div class="met-l">সেরা পণ্য</div><div class="met-sub">Napa সবচেয়ে বেশি</div></div>
+        <div class="met red"><div class="met-v">৪</div><div class="met-l">কম Stock</div><div class="met-sub">এখনই অর্ডার দিন</div></div>
+      </div>
+
+      <div class="section-title"><div class="live-dot"></div> আজকের বিক্রি — Realtime</div>
+      <div class="table-wrap">
+        <table class="rtable">
+          <thead><tr><th>পণ্য</th><th>পরিমাণ</th><th>Unit</th><th>মূল্য</th><th>লাভ</th><th>সময়</th></tr></thead>
+          <tbody id="realtimeTable"></tbody>
+        </table>
+      </div>
+
+      <div class="section-title">⚠ কম Stock — এখনই অর্ডার দিন</div>
+      <div class="table-wrap" id="overviewAlerts"></div>
+    </div>
+
+    <!-- SELL RECORDS -->
+    <div class="pane" id="pane-sell">
+      <div class="section-title" style="font-size:18px;font-weight:700">বিক্রির রেকর্ড</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:16px">আজকের সব লেনদেন</div>
+      <div class="table-wrap">
+        <table class="rtable">
+          <thead><tr><th>#</th><th>পণ্য</th><th>পরিমাণ</th><th>মূল্য</th><th>লাভ</th><th>সময়</th><th></th></tr></thead>
+          <tbody id="sellTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- STOCK ALERTS -->
+    <div class="pane" id="pane-stock">
+      <div class="section-title" style="font-size:18px;font-weight:700">স্টক সতর্কতা</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:16px">কম স্টক ও মেয়াদ শেষের সতর্কতা</div>
+      <div class="table-wrap" id="stockAlertFull"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="pane" id="pane-history">
+      <div class="section-title" style="font-size:18px;font-weight:700">বিক্রির ইতিহাস</div>
+      <div class="date-filter">
+        <select id="histRange" onchange="renderHistory()">
+          <option value="7">শেষ ৭ দিন</option>
+          <option value="15">শেষ ১৫ দিন</option>
+          <option value="30">শেষ ৩০ দিন</option>
+          <option value="all">সব দিন</option>
+        </select>
+        <input type="date" id="histFrom" onchange="renderHistory()" style="font-size:13px"/>
+        <input type="date" id="histTo" onchange="renderHistory()" style="font-size:13px"/>
+        <span style="font-size:12px;color:#64748b">নির্দিষ্ট তারিখ বেছে নিন অথবা রেঞ্জ বেছে নিন</span>
+      </div>
+      <div id="historyContent"></div>
+    </div>
+
+    <!-- AI MANAGER -->
+    <div class="pane" id="pane-ai">
+      <div class="section-title" style="font-size:18px;font-weight:700">🤖 AI ম্যানেজার</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:16px">যেকোনো প্রশ্ন করুন — বাংলায়</div>
+      <div class="chat-wrap">
+        <div class="chat-header">
+          <div class="chat-ai-dot"></div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#e2e8f0">AI ফার্মেসি সহকারী</div>
+            <div style="font-size:11px;color:#64748b">সবসময় অনলাইন</div>
+          </div>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="msg ai">
+            <div class="avatar ai">AI</div>
+            <div class="bubble">আস্সালামুয়ালাইকুম! আমি আপনার ফার্মেসির সব তথ্য জানি। আজকের বিক্রি, স্টক, লাভ-ক্ষতি, যেকোনো প্রশ্ন করুন। ইতিহাসও দেখাতে পারব।</div>
+          </div>
+        </div>
+        <div class="quick-q">
+          <div class="qq" onclick="askAI('আজকে কত বিক্রি হলো?')">আজকে কত বিক্রি?</div>
+          <div class="qq" onclick="askAI('কোন ওষুধ সবচেয়ে বেশি বিক্রি হয়েছে?')">সেরা পণ্য কোনটা?</div>
+          <div class="qq" onclick="askAI('কোন স্টক শেষ হওয়ার পথে?')">স্টক কম কোথায়?</div>
+          <div class="qq" onclick="askAI('গত ৭ দিনে মোট কত বিক্রি হয়েছে?')">৭ দিনের বিক্রি?</div>
+          <div class="qq" onclick="askAI('আজকে লাভ কত হলো?')">আজকের লাভ?</div>
+          <div class="qq" onclick="askAI('কোন মেয়াদ শেষের পথে আছে?')">মেয়াদের অ্যালার্ট?</div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" placeholder="যেকোনো প্রশ্ন লিখুন বাংলায়..." onkeydown="if(event.key==='Enter')sendChat()"/>
+          <button class="send-btn" onclick="sendChat()">পাঠান</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- VOICE MODAL -->
+<div class="modal-overlay" id="voiceModal">
+  <div class="modal">
+    <div class="modal-title">🎙️ ভয়েস এন্ট্রি</div>
+    <div class="modal-sub">মাইক চাপুন, তারপর বাংলায় বলুন</div>
+    <div class="mic-btn" id="micBtn" onclick="toggleMic()">🎙️</div>
+    <div class="mic-status" id="micStat">মাইক বোতাম চাপুন</div>
+    <div class="transcript-box" id="transcript">এখানে আপনার কথা দেখাবে...</div>
+    <div class="voice-result" id="voiceRes"></div>
+    <div class="modal-hint">
+      <b style="color:#64748b">উদাহরণ:</b><br>
+      "Napa তিনটা পিস বিক্রি"<br>
+      "Azithromycin এক পাতা বিক্রি"<br>
+      "Omeprazole দুই পাতা"<br>
+      "Calcium পাঁচটা ট্যাবলেট বিক্রি"
+    </div>
+    <button class="modal-close" onclick="closeVoice()">বন্ধ করুন</button>
+  </div>
+</div>
+
+<!-- SELL MODAL -->
+<div class="modal-overlay" id="sellModal">
+  <div class="smodal">
+    <div class="smodal-title">💊 বিক্রি যোগ করুন</div>
+    <input class="s-search" type="text" id="sSearch" placeholder="ওষুধ খুঁজুন... যেমন: napa, azith, omep" oninput="filterSell()"/>
+    <div id="sdrugList" style="max-height:260px;overflow-y:auto"></div>
+    <div class="cart-bottom" id="cartBottom" style="display:none">
+      <div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:8px">🛒 কার্ট</div>
+      <div id="cartRows"></div>
+      <div class="cart-total-row"><span>মোট</span><span id="cartTotal">৳০</span></div>
+      <button class="confirm-sell-btn" onclick="confirmSell()">✅ বিক্রি নিশ্চিত করুন</button>
+    </div>
+    <button class="modal-close" style="margin-top:10px;width:100%" onclick="closeSellModal()">বাতিল</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA =====
+const drugs=[
+  {id:1,name:"Napa 500mg",generic:"Paracetamol",ppu:1.5,pps:15,cost:1,costS:10,stock:850,unit:10,min:200,exp:"2026-08-01"},
+  {id:2,name:"Azithromycin 500mg",generic:"Azithromycin",ppu:35,pps:350,cost:25,costS:250,stock:120,unit:6,min:60,exp:"2025-07-15"},
+  {id:3,name:"Omeprazole 20mg",generic:"Omeprazole",ppu:5,pps:50,cost:3,costS:30,stock:300,unit:10,min:100,exp:"2026-12-01"},
+  {id:4,name:"Metformin 500mg",generic:"Metformin",ppu:3,pps:30,cost:2,costS:20,stock:180,unit:10,min:150,exp:"2026-10-01"},
+  {id:5,name:"Amlodipine 5mg",generic:"Amlodipine",ppu:4,pps:40,cost:2.5,costS:25,stock:90,unit:10,min:100,exp:"2027-01-01"},
+  {id:6,name:"Cetirizine 10mg",generic:"Cetirizine",ppu:3,pps:30,cost:2,costS:20,stock:400,unit:10,min:100,exp:"2026-09-01"},
+  {id:7,name:"Amoxicillin 500mg",generic:"Amoxicillin",ppu:8,pps:80,cost:5,costS:50,stock:72,unit:12,min:120,exp:"2025-09-20"},
+  {id:8,name:"Losartan 50mg",generic:"Losartan",ppu:6,pps:60,cost:4,costS:40,stock:200,unit:10,min:100,exp:"2027-03-01"},
+  {id:9,name:"Atorvastatin 20mg",generic:"Atorvastatin",ppu:8,pps:80,cost:5,costS:50,stock:150,unit:10,min:80,exp:"2026-11-01"},
+  {id:10,name:"Vitamin C 500mg",generic:"Ascorbic Acid",ppu:2,pps:20,cost:1,costS:10,stock:600,unit:10,min:200,exp:"2026-06-30"},
+  {id:11,name:"Calcium + D3",generic:"Calcium",ppu:10,pps:100,cost:6,costS:60,stock:80,unit:10,min:100,exp:"2026-08-01"},
+  {id:12,name:"Ranitidine 150mg",generic:"Ranitidine",ppu:4,pps:40,cost:2.5,costS:25,stock:250,unit:10,min:80,exp:"2026-07-01"},
+  {id:13,name:"Diclofenac 50mg",generic:"Diclofenac",ppu:5,pps:50,cost:3,costS:30,stock:320,unit:10,min:100,exp:"2027-02-01"},
+  {id:14,name:"Montelukast 10mg",generic:"Montelukast",ppu:12,pps:120,cost:8,costS:80,stock:60,unit:10,min:80,exp:"2026-10-01"},
+  {id:15,name:"Salbutamol Inhaler",generic:"Salbutamol",ppu:null,pps:280,cost:null,costS:200,stock:25,unit:1,min:20,exp:"2026-05-01"},
+  {id:16,name:"Pantoprazole 40mg",generic:"Pantoprazole",ppu:8,pps:80,cost:5,costS:50,stock:140,unit:10,min:80,exp:"2026-12-01"},
+  {id:17,name:"Clopidogrel 75mg",generic:"Clopidogrel",ppu:15,pps:150,cost:10,costS:100,stock:50,unit:10,min:60,exp:"2027-01-01"},
+  {id:18,name:"Zinc 20mg",generic:"Zinc Sulfate",ppu:2,pps:20,cost:1,costS:10,stock:500,unit:10,min:150,exp:"2026-09-01"},
+  {id:19,name:"Esomeprazole 40mg",generic:"Esomeprazole",ppu:12,pps:120,cost:8,costS:80,stock:100,unit:10,min:80,exp:"2026-11-01"},
+  {id:20,name:"Fexofenadine 120mg",generic:"Fexofenadine",ppu:10,pps:100,cost:6,costS:60,stock:110,unit:10,min:60,exp:"2026-08-01"},
+];
+
+// Demo sales today
+const demoTimes=["09:12","09:45","10:03","10:31","11:02","11:28","12:15","12:44","13:10","13:55","14:22","14:50","15:30","16:05","16:42","17:10","17:38","18:05","18:40","19:12","19:45","20:03","20:31","21:02","21:28","22:00","22:15","22:44"];
+const demoSales=[
+  {drugId:1,qty:12,unit:'pcs'},{drugId:3,qty:2,unit:'sheet'},{drugId:6,qty:15,unit:'pcs'},
+  {drugId:2,qty:1,unit:'sheet'},{drugId:9,qty:1,unit:'sheet'},{drugId:10,qty:20,unit:'pcs'},
+  {drugId:4,qty:2,unit:'sheet'},{drugId:7,qty:1,unit:'sheet'},{drugId:13,qty:10,unit:'pcs'},
+  {drugId:1,qty:8,unit:'pcs'},{drugId:16,qty:1,unit:'sheet'},{drugId:18,qty:15,unit:'pcs'},
+  {drugId:5,qty:1,unit:'sheet'},{drugId:12,qty:10,unit:'pcs'},{drugId:20,qty:1,unit:'sheet'},
+  {drugId:8,qty:1,unit:'sheet'},{drugId:11,qty:5,unit:'pcs'},{drugId:19,qty:1,unit:'sheet'},
+  {drugId:6,qty:10,unit:'pcs'},{drugId:3,qty:1,unit:'sheet'},{drugId:1,qty:5,unit:'pcs'},
+  {drugId:14,qty:1,unit:'sheet'},{drugId:17,qty:5,unit:'pcs'},{drugId:10,qty:10,unit:'pcs'},
+  {drugId:4,qty:1,unit:'sheet'},{drugId:2,qty:1,unit:'sheet'},{drugId:13,qty:5,unit:'pcs'},{drugId:9,qty:1,unit:'sheet'}
+];
+
+let todaySales=demoSales.map((s,i)=>{
+  const d=drugs.find(x=>x.id===s.drugId);
+  const price=s.unit==='sheet'?d.pps:d.ppu;
+  const cost=s.unit==='sheet'?d.costS:d.cost;
+  const sub=price*s.qty;
+  const profit=(cost?((price-cost)*s.qty):sub*0.3);
+  return{...s,name:d.name,price:sub,profit:Math.round(profit),time:demoTimes[i]};
+});
+
+// History data
+function genHistory(){
+  const h={};
+  for(let i=1;i<=30;i++){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const ds=d.toISOString().split('T')[0];
+    const sales=[];
+    const cnt=Math.floor(Math.random()*20)+10;
+    let total=0,profit=0;
+    for(let j=0;j<cnt;j++){
+      const dr=drugs[Math.floor(Math.random()*drugs.length)];
+      const u=Math.random()>.5&&dr.unit>1?'sheet':'pcs';
+      const q=Math.floor(Math.random()*5)+1;
+      const price=u==='sheet'?dr.pps:dr.ppu;
+      const cost=u==='sheet'?dr.costS:dr.cost;
+      const sub=price*q;
+      const pr=cost?(price-cost)*q:sub*0.3;
+      sales.push({name:dr.name,qty:q,unit:u,price:sub,profit:Math.round(pr)});
+      total+=sub;profit+=Math.round(pr);
+    }
+    h[ds]={date:ds,sales,total:Math.round(total),profit:Math.round(profit),count:cnt};
+  }
+  return h;
+}
+const historyData=genHistory();
+
+function getPrice(d,unit){return unit==='sheet'?d.pps:d.ppu;}
+function getPcs(d,qty,unit){return d.unit===1?qty:(unit==='sheet'?qty*d.unit:qty);}
+function daysToExp(exp){return Math.ceil((new Date(exp)-new Date())/86400000);}
+
+// ===== UI =====
+function showTab(t){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));
+  document.getElementById('pane-'+t).classList.add('on');
+  const tabs=['overview','sell','stock','history','ai'];
+  const navItems=document.querySelectorAll('.nav-item');
+  tabs.forEach((tab,i)=>{if(tab===t)navItems[i].classList.add('on');});
+  if(t==='stock')renderStockFull();
+  if(t==='history')renderHistory();
+  if(t==='sell')renderSellTable();
+  if(t==='overview'){renderRealtime();renderOverviewAlerts();}
+}
+
+function renderRealtime(){
+  const el=document.getElementById('realtimeTable');
+  el.innerHTML=todaySales.map(s=>`
+    <tr>
+      <td style="font-weight:500;color:#e2e8f0">${s.name}</td>
+      <td style="color:#94a3b8">${s.qty}</td>
+      <td><span style="background:#1e3a5f;color:#38bdf8;font-size:10px;padding:2px 7px;border-radius:4px">${s.unit==='sheet'?'পাতা':'পিস'}</span></td>
+      <td style="color:#4ade80;font-weight:600">৳${s.price.toLocaleString()}</td>
+      <td style="color:#fbbf24">৳${s.profit.toLocaleString()}</td>
+      <td style="color:#475569;font-size:12px">${s.time} AM</td>
+    </tr>`).join('');
+}
+
+function renderOverviewAlerts(){
+  const low=drugs.filter(d=>d.stock<=d.min);
+  document.getElementById('overviewAlerts').innerHTML=low.map(d=>`
+    <div class="alert-row">
+      <div class="a-icon red">⚠️</div>
+      <div><div class="a-title">${d.name}</div><div class="a-sub">স্টক: ${d.stock} পিস — মিনিমাম ${d.min} পিস দরকার</div></div>
+      <button class="order-btn">অর্ডার দিন</button>
+    </div>`).join('');
+}
+
+function renderSellTable(){
+  const el=document.getElementById('sellTable');
+  el.innerHTML=todaySales.map((s,i)=>`
+    <tr>
+      <td style="color:#475569">${i+1}</td>
+      <td style="font-weight:500;color:#e2e8f0">${s.name}</td>
+      <td style="color:#94a3b8">${s.qty} ${s.unit==='sheet'?'পাতা':'পিস'}</td>
+      <td style="color:#4ade80;font-weight:600">৳${s.price.toLocaleString()}</td>
+      <td style="color:#fbbf24">৳${s.profit.toLocaleString()}</td>
+      <td style="color:#475569;font-size:12px">${s.time}</td>
+      <td><button style="background:none;border:none;color:#475569;cursor:pointer;font-size:14px" onclick="deleteSale(${i})">🗑</button></td>
+    </tr>`).join('');
+}
+
+function deleteSale(i){todaySales.splice(i,1);renderSellTable();updateMetrics();showToast('বিক্রি মুছে ফেলা হয়েছে');}
+
+function renderStockFull(){
+  const low=drugs.filter(d=>d.stock<=d.min);
+  const exp=drugs.filter(d=>daysToExp(d.exp)<=60);
+  let h='';
+  low.forEach(d=>{
+    const s=d.unit>1?`${Math.floor(d.stock/d.unit)} পাতা (${d.stock} পিস)`:d.stock+'টি';
+    h+=`<div class="alert-row"><div class="a-icon red">⚠️</div><div><div class="a-title">${d.name}</div><div class="a-sub">বর্তমান: ${s} — মিনিমাম ${d.min} পিস দরকার</div></div><button class="order-btn">অর্ডার দিন</button></div>`;
+  });
+  exp.forEach(d=>{
+    const days=daysToExp(d.exp);
+    h+=`<div class="alert-row"><div class="a-icon amber">⏰</div><div><div class="a-title">${d.name}</div><div class="a-sub">মেয়াদ শেষ ${days} দিনে — ${d.exp}</div></div><button class="order-btn">দ্রুত বিক্রি করুন</button></div>`;
+  });
+  document.getElementById('stockAlertFull').innerHTML=h||'<div style="padding:20px;text-align:center;color:#475569">কোনো সতর্কতা নেই ✓</div>';
+}
+
+function renderHistory(){
+  const range=document.getElementById('histRange').value;
+  const from=document.getElementById('histFrom').value;
+  const to=document.getElementById('histTo').value;
+  let days=Object.values(historyData).sort((a,b)=>b.date.localeCompare(a.date));
+  if(from&&to){days=days.filter(d=>d.date>=from&&d.date<=to);}
+  else if(range!=='all'){const n=parseInt(range);const cutoff=new Date();cutoff.setDate(cutoff.getDate()-n);days=days.filter(d=>new Date(d.date)>=cutoff);}
+  const el=document.getElementById('historyContent');
+  if(!days.length){el.innerHTML='<div style="text-align:center;color:#475569;padding:20px">এই সময়ের কোনো তথ্য নেই</div>';return;}
+  const bn=['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+  el.innerHTML=days.map(day=>{
+    const dt=new Date(day.date);
+    const label=`${dt.getDate()} ${bn[dt.getMonth()]} ${dt.getFullYear()}`;
+    const topItems=day.sales.sort((a,b)=>b.price-a.price).slice(0,4);
+    return`<div class="hist-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div class="hist-date">📅 ${label}</div>
+        <div style="font-size:11px;color:#64748b">${day.count}টি লেনদেন</div>
+      </div>
+      ${topItems.map(s=>`<div class="hist-row"><span style="color:#94a3b8">${s.name} × ${s.qty} ${s.unit==='sheet'?'পাতা':'পিস'}</span><span style="color:#4ade80">৳${s.price.toLocaleString()}</span></div>`).join('')}
+      ${day.sales.length>4?`<div style="font-size:11px;color:#475569;padding:4px 0">... আরো ${day.sales.length-4}টি পণ্য</div>`:''}
+      <div class="hist-total"><span>মোট বিক্রি</span><span>৳${day.total.toLocaleString()}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#fbbf24;margin-top:4px"><span>মোট লাভ</span><span>৳${day.profit.toLocaleString()}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function updateMetrics(){
+  const total=todaySales.reduce((s,x)=>s+x.price,0);
+  const profit=todaySales.reduce((s,x)=>s+x.profit,0);
+  document.getElementById('m1').textContent='৳'+total.toLocaleString();
+  document.getElementById('m2').textContent='৳'+profit.toLocaleString();
+}
+
+// ===== AI CHAT =====
+const aiAnswers={
+  'আজকে কত বিক্রি হলো':()=>{const t=todaySales.reduce((s,x)=>s+x.price,0);const p=todaySales.reduce((s,x)=>s+x.profit,0);return`আজকে মোট বিক্রি হয়েছে ৳${t.toLocaleString()} — ${todaySales.length}টি লেনদেন। লাভ হয়েছে ৳${p.toLocaleString()}।`;},
+  'সেরা পণ্য':()=>{const map={};todaySales.forEach(s=>{map[s.name]=(map[s.name]||0)+s.price;});const sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,3);return`আজকের সেরা ৩টি পণ্য:\n১. ${sorted[0][0]} — ৳${sorted[0][1].toLocaleString()}\n২. ${sorted[1]?sorted[1][0]+' — ৳'+sorted[1][1].toLocaleString():'-'}\n৩. ${sorted[2]?sorted[2][0]+' — ৳'+sorted[2][1].toLocaleString():'-'}`;},
+  'স্টক কম':()=>{const low=drugs.filter(d=>d.stock<=d.min);return low.length?`${low.length}টি পণ্যের স্টক কম:\n${low.map(d=>`• ${d.name}: ${d.stock} পিস বাকি`).join('\n')}`:' সব স্টক ঠিক আছে।';},
+  '৭ দিনের বিক্রি':()=>{const days=Object.values(historyData).slice(0,7);const t=days.reduce((s,d)=>s+d.total,0);const p=days.reduce((s,d)=>s+d.profit,0);return`গত ৭ দিনে মোট বিক্রি ৳${t.toLocaleString()} এবং লাভ ৳${p.toLocaleString()}। গড়ে প্রতিদিন ৳${Math.round(t/7).toLocaleString()} বিক্রি হয়েছে।`;},
+  'আজকের লাভ':()=>{const p=todaySales.reduce((s,x)=>s+x.profit,0);const t=todaySales.reduce((s,x)=>s+x.price,0);return`আজকের মোট লাভ ৳${p.toLocaleString()}। মার্জিন ${Math.round(p/t*100)}%।`;},
+  'মেয়াদের অ্যালার্ট':()=>{const exp=drugs.filter(d=>daysToExp(d.exp)<=60);return exp.length?`${exp.length}টি পণ্যের মেয়াদ শেষের পথে:\n${exp.map(d=>`• ${d.name}: ${daysToExp(d.exp)} দিন বাকি`).join('\n')}`:' কোনো মেয়াদের সমস্যা নেই।';},
+};
+
+function askAI(q){
+  addMsg(q,'user');
+  setTimeout(()=>{
+    let reply='এই প্রশ্নের উত্তর পেলাম না। আজকের বিক্রি, স্টক, লাভ বা ইতিহাস নিয়ে জিজ্ঞেস করুন।';
+    for(const[key,fn] of Object.entries(aiAnswers)){if(q.includes(key.split(' ')[0])||q.includes(key)){reply=fn();break;}}
+    addMsg(reply,'ai');
+  },700);
+}
+function sendChat(){const q=document.getElementById('chatInput').value.trim();if(!q)return;document.getElementById('chatInput').value='';askAI(q);}
+function addMsg(text,role){
+  const el=document.getElementById('chatMessages');
+  const d=document.createElement('div');
+  d.className='msg '+role;
+  d.innerHTML=`<div class="avatar ${role}">${role==='ai'?'AI':'আপ'}</div><div class="bubble">${text.replace(/\n/g,'<br>')}</div>`;
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+}
+
+// ===== VOICE =====
+let recog=null,listening=false;
+const wn={'এক':1,'একটা':1,'দুই':2,'দুইটা':2,'তিন':3,'তিনটা':3,'চার':4,'চারটা':4,'পাঁচ':5,'পাঁচটা':5,'ছয়':6,'সাত':7,'আট':8,'নয়':9,'দশ':10,'১':1,'২':2,'৩':3,'৪':4,'৫':5,'৬':6,'৭':7,'৮':8,'৯':9,'১০':10};
+function openVoice(){document.getElementById('voiceModal').classList.add('on');}
+function closeVoice(){document.getElementById('voiceModal').classList.remove('on');if(listening&&recog)recog.stop();}
+function toggleMic(){
+  if(!('webkitSpeechRecognition'in window)&&!('SpeechRecognition'in window)){showVR('Chrome ব্রাউজারে কাজ করে।','err');return;}
+  if(listening){recog.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recog=new SR();recog.lang='bn-BD';recog.continuous=false;recog.interimResults=true;
+  recog.onstart=()=>{listening=true;document.getElementById('micBtn').classList.add('on');document.getElementById('micStat').textContent='🔴 শুনছি... বলুন';document.getElementById('transcript').textContent='...';document.getElementById('voiceRes').style.display='none';};
+  recog.onresult=(e)=>{document.getElementById('transcript').textContent=Array.from(e.results).map(r=>r[0].transcript).join('');};
+  recog.onend=()=>{listening=false;document.getElementById('micBtn').classList.remove('on');document.getElementById('micStat').textContent='মাইক বোতাম চাপুন';const t=document.getElementById('transcript').textContent;if(t&&t!=='...')processVoice(t);};
+  recog.onerror=()=>{listening=false;document.getElementById('micBtn').classList.remove('on');};
+  recog.start();
+}
+function processVoice(text){
+  const lower=text.toLowerCase();
+  let best=null,bestScore=0;
+  drugs.forEach(d=>{const words=[...d.name.toLowerCase().split(/[\s()]+/),...d.generic.toLowerCase().split(' ')];let sc=0;words.forEach(w=>{if(w.length>2&&lower.includes(w))sc++;});if(sc>bestScore){bestScore=sc;best=d;}});
+  if(!best||bestScore===0){showVR('ওষুধ বুঝতে পারিনি। আবার বলুন।','err');return;}
+  let qty=1;const parts=lower.split(/\s+/);
+  for(let w of parts){if(wn[w]){qty=wn[w];break;}const n=parseInt(w);if(!isNaN(n)&&n>0){qty=n;break;}}
+  const unit=(lower.includes('পাতা')||lower.includes('sheet'))?'sheet':'pcs';
+  const price=getPrice(best,unit);
+  const cost=unit==='sheet'?best.costS:best.cost;
+  const profit=cost?(price-cost)*qty:price*qty*0.3;
+  const pcs=getPcs(best,qty,unit);
+  best.stock=Math.max(0,best.stock-pcs);
+  const now=new Date();
+  const time=`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+  todaySales.push({name:best.name,qty,unit,price:price*qty,profit:Math.round(profit),time});
+  updateMetrics();renderRealtime();
+  const label=unit==='sheet'?`${qty} পাতা`:`${qty} পিস`;
+  showVR(`✅ সেভ: ${best.name} ${label} — ৳${(price*qty).toLocaleString()}। স্টক: ${best.stock} পিস`,'ok');
+  showToast(`ভয়েস এন্ট্রি সম্পন্ন — ৳${(price*qty).toLocaleString()}`);
+}
+function showVR(msg,type){const r=document.getElementById('voiceRes');r.style.display='block';r.className='voice-result voice-'+type;r.textContent=msg;}
+
+// ===== SELL MODAL =====
+let cart={};
+let sellFiltered=[...drugs];
+function openSellModal(){cart={};document.getElementById('sSearch').value='';sellFiltered=[...drugs];renderSellList();renderCart();document.getElementById('sellModal').classList.add('on');}
+function closeSellModal(){document.getElementById('sellModal').classList.remove('on');}
+function filterSell(){const q=document.getElementById('sSearch').value.toLowerCase();sellFiltered=q?drugs.filter(d=>d.name.toLowerCase().includes(q)||d.generic.toLowerCase().includes(q)):[...drugs];renderSellList();}
+function renderSellList(){
+  document.getElementById('sdrugList').innerHTML=sellFiltered.slice(0,10).map(d=>{
+    const c=cart[d.id]||{qty:1,unit:'pcs'};
+    const unitOpts=d.unit===1?`<option value="pcs">পিস ৳${d.pps}</option>`:`<option value="pcs">পিস ৳${d.ppu}</option><option value="sheet">পাতা ৳${d.pps}</option>`;
+    return`<div class="drug-list-item">
+      <div><div class="dli-name">${d.name}</div><div class="dli-meta">${d.generic} · স্টক ${d.stock} পিস</div></div>
+      <div class="dli-right">
+        <div class="qctrl">
+          <button class="qb" onclick="adjC(${d.id},-1)">−</button>
+          <input class="qv" type="number" min="1" value="${c.qty}" id="cq${d.id}" onchange="setC(${d.id},this.value)"/>
+          <button class="qb" onclick="adjC(${d.id},1)">+</button>
+        </div>
+        <select class="usel" id="cu${d.id}" onchange="setU(${d.id},this.value)">${unitOpts}</select>
+        <button style="background:#10b98120;border:1px solid #10b981;color:#4ade80;font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer" onclick="addC(${d.id})">+ যোগ</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function adjC(id,d){if(!cart[id])cart[id]={qty:1,unit:'pcs'};cart[id].qty=Math.max(1,(cart[id].qty||1)+d);const i=document.getElementById('cq'+id);if(i)i.value=cart[id].qty;}
+function setC(id,v){if(!cart[id])cart[id]={qty:1,unit:'pcs'};cart[id].qty=Math.max(1,parseInt(v)||1);}
+function setU(id,v){if(!cart[id])cart[id]={qty:1,unit:'pcs'};cart[id].unit=v;}
+function addC(id){const qty=parseInt(document.getElementById('cq'+id)?.value)||1;const unit=document.getElementById('cu'+id)?.value||'pcs';cart[id]={qty,unit};renderCart();showToast('কার্টে যোগ হয়েছে ✓');}
+function renderCart(){
+  const items=Object.entries(cart);
+  const cb=document.getElementById('cartBottom');
+  if(!items.length){cb.style.display='none';return;}
+  cb.style.display='block';
+  let total=0;
+  document.getElementById('cartRows').innerHTML=items.map(([id,{qty,unit}])=>{
+    const d=drugs.find(x=>x.id==id);const price=getPrice(d,unit);const sub=price*qty;total+=sub;
+    const label=unit==='sheet'?`${qty} পাতা`:`${qty} পিস`;
+    return`<div class="cart-row"><span>${d.name} × ${label}</span><span style="color:#4ade80">৳${sub.toLocaleString()}</span></div>`;
+  }).join('');
+  document.getElementById('cartTotal').textContent='৳'+total.toLocaleString();
+}
+function confirmSell(){
+  const items=Object.entries(cart);if(!items.length)return;
+  let total=0;
+  items.forEach(([id,{qty,unit}])=>{
+    const d=drugs.find(x=>x.id==id);const price=getPrice(d,unit);const cost=unit==='sheet'?d.costS:d.cost;
+    const sub=price*qty;const profit=cost?(price-cost)*qty:sub*0.3;
+    const pcs=getPcs(d,qty,unit);d.stock=Math.max(0,d.stock-pcs);total+=sub;
+    const now=new Date();const time=`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    todaySales.push({name:d.name,qty,unit,price:sub,profit:Math.round(profit),time});
+  });
+  updateMetrics();renderRealtime();cart={};
+  closeSellModal();showToast(`✅ বিক্রি সেভ! ৳${total.toLocaleString()}`);
+}
+
+// ===== LIVE TIME =====
+function updateTime(){const n=new Date();document.getElementById('liveTime').textContent=n.toLocaleTimeString('bn-BD');}
+setInterval(updateTime,1000);updateTime();
+
+// ===== TOAST =====
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
+
+// ===== INIT =====
+renderRealtime();renderOverviewAlerts();updateMetrics();
+</script>
+</body>
+</html>
